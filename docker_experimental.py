@@ -66,6 +66,14 @@ class docker_experimental(ShutItModule):
 		# shutit.package_installed(package)  - Returns True if the package exists on the target
 		# shutit.set_password(password, user='')
 		#                                    - Set password for a given user on target
+		shutit.send('mkdir -p /tmp/shutit-vagrant-docker-experimental')
+		shutit.send('cd /tmp/shutit-vagrant-docker-experimental')
+		if shutit.file_exists('Vagrantfile'):
+			shutit.send('git pull')
+		else:
+			shutit.send('cd ..')
+			shutit.send('git clone --recursive https://github.com/ianmiell/shutit-vagrant-docker-experimental.git')
+		shutit.send('cd /tmp/shutit-vagrant-docker-experimental')
 		if shutit.send_and_match_output('vagrant status',['.*running.*','.*saved.*','.*poweroff.*','.*not created.*','.*aborted.*']):
 			if not shutit.send_and_match_output('vagrant status',['.*running.*','.*not created.*']) and shutit.get_input('A vagrant setup already exists here. Do you want me to start up the existing instance (y) or destroy it (n)?',boolean=True):
 				shutit.send('vagrant up')
