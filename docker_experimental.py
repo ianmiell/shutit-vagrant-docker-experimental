@@ -87,6 +87,9 @@ class docker_experimental(ShutItModule):
 		shutit.login(command='vagrant ssh')
 		shutit.install('curl')
 		shutit.send('curl -sSL https://experimental.docker.com/ | sh')
+		shutit.login(command='sudo su -')
+		shutit.send('nohup docker daemon &')
+		shutit.logout()
 		shutit.pause_point('')
 		shutit.logout()
 		return True
