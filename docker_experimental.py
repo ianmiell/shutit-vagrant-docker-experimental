@@ -66,8 +66,8 @@ class docker_experimental(ShutItModule):
 		# shutit.package_installed(package)  - Returns True if the package exists on the target
 		# shutit.set_password(password, user='')
 		#                                    - Set password for a given user on target
-		if vagrant.restore(shutit):
-			
+		if not vagrant.restore(shutit):
+			shutit.pause_point('error starting up Vagrant')
 		shutit.login(command='vagrant ssh')
 		shutit.install('curl')
 		shutit.send('curl -sSL https://experimental.docker.com/ | sh')
