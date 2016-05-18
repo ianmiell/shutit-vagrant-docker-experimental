@@ -76,21 +76,41 @@ class docker_experimental(ShutItModule):
 		shutit.send('cd /tmp/shutit-vagrant-docker-experimental')
 		if shutit.send_and_match_output('vagrant status',['.*running.*','.*saved.*','.*poweroff.*','.*not created.*','.*aborted.*']):
 			if not shutit.send_and_match_output('vagrant status',['.*running.*','.*not created.*']) and shutit.get_input('A vagrant setup already exists here. Do you want me to start up the existing instance (y) or destroy it (n)?',boolean=True):
-				shutit.send('vagrant up')
+				shutit.send('vagrant up',note='Start up the vagrant machine')
 			elif not shutit.send_and_match_output('vagrant status',['.*not created.*']):
-				shutit.send('vagrant up')
+				shutit.send('vagrant up',note='Start up the vagrant machine')
 			elif not shutit.send_and_match_output('vagrant status',['.*running.*']):
-				shutit.send('vagrant destroy -f')
-				shutit.send('vagrant up')
+				shutit.send('vagrant destroy -f',note='Destroy the existing vagrant machine')
+				shutit.send('vagrant up',note='Start up the vagrant machine')
 		else:
 			shutit.pause_point('error starting up Vagrant')
-		shutit.login(command='vagrant ssh')
+		shutit.login(command='vagrant ssh',note='Log into the Vagrant machine')
+		shutit.login(command='sudo su -',note='Become root')
 		shutit.install('curl')
-		shutit.send('curl -sSL https://experimental.docker.com/ | sh')
-		shutit.login(command='sudo su -')
-		shutit.send('nohup docker daemon &')
+		shutit.send('curl -sSL https://experimental.docker.com/ | sh',note='Install the experimental docker binary')
+		shutit.send('nohup docker daemon &',note='Start up the Docker daemon')
+		if shutit.cfg[self.module_id]['network']:
+vagrant_ip = shutit.send_and_get_output("""hostname -i | awk '{print $1}'""")
+			shutit.send('docker run -d --name nettest debian sleep infinity')
+			shutit.send('docker network ls')
+			bridge_id = shutit.send_and_get_output("""docker network ls --no-trunc | grep bridge | awk '{print $1}'""")
+			shutit.send('docker network inspect bridge')
+			shutit.send('docker disconnect bridge nettest')
+docker network inspect bridge
+docker exec -ti nettest bash
+ip route
+logout
+docker network connect bridge nettest
+docker exec -ti nettest bash
+ip route
+logout
+https://sreeninet.wordpress.com/2015/07/20/docker-experimental-networking-1/
+https://sreeninet.wordpress.com/2015/07/20/docker-experimental-networking-2/
+https://sreeninet.wordpress.com/2015/07/20/docker-experimental-networking-3/
+			shutit.send('docker rm -f nettest')
+
+			
 		shutit.logout()
-		shutit.pause_point('')
 		shutit.logout()
 		return True
 
@@ -102,6 +122,7 @@ class docker_experimental(ShutItModule):
 		# shutit.get_config(self.module_id, 'myconfig', default='a value')
 		#                                      and reference in your code with:
 		# shutit.cfg[self.module_id]['myconfig']
+		shutit.get_config(self.module_id, 'network', default=False, boolean=True)
 		return True
 
 	def test(self, shutit):
